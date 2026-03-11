@@ -12,7 +12,7 @@ export const apiBaseUrl = marketplaceRootURL => {
 
   // In development, the dev API server is running in a different port
   if (useDevApiServer) {
-    return `http://localhost:${port}`;
+    return '';
   }
 
   // Otherwise, use the given marketplaceRootURL parameter or the same domain and port as the frontend

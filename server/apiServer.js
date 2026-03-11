@@ -19,6 +19,9 @@ const radix = 10;
 const PORT = parseInt(process.env.REACT_APP_DEV_API_SERVER_PORT, radix);
 const app = express();
 
+// Parse JSON request bodies (required for /api/hubtel-initiate)
+app.use(express.json());
+
 // NOTE: CORS is only needed in this dev API server because it's
 // running in a different port than the main app.
 app.use(

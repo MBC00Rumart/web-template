@@ -4,6 +4,8 @@ import loadable from '@loadable/component';
 import getPageDataLoadingAPI from '../containers/pageDataLoadingAPI';
 import NotFoundPage from '../containers/NotFoundPage/NotFoundPage';
 import PreviewResolverPage from '../containers/PreviewResolverPage/PreviewResolverPage';
+import HubtelSuccessPage from '../containers/HubtelSuccessPage';
+import HubtelCancelPage from '../containers/HubtelCancelPage';
 
 // routeConfiguration needs to initialize containers first
 // Otherwise, components will import form container eventually and
@@ -369,6 +371,16 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       name: 'PrivacyPolicyPage',
       component: PrivacyPolicyPage,
       loadData: pageDataLoadingAPI.PrivacyPolicyPage.loadData,
+    },
+    {
+      path: '/hubtel-success',
+      name: 'HubtelSuccessPage',
+      component: HubtelSuccessPage,
+    },
+    {
+      path: '/hubtel-cancel',
+      name: 'HubtelCancelPage',
+      component: HubtelCancelPage,
     },
     {
       path: '/styleguide',

@@ -1,3 +1,5 @@
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("HAS_CLIENT_SECRET:", !!process.env.SHARETRIBE_SDK_CLIENT_SECRET);
 /**
  * This is the main server to run the production application.
  *

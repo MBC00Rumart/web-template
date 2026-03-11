@@ -10,12 +10,17 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { deserialize } = require('./api-util/sdk');
 
+const hubtelInitiate = require('./api/hubtelInitiate');
+const hubtelCallback = require('./api/hubtelCallback');
+
 const initiateLoginAs = require('./api/initiate-login-as');
 const loginAs = require('./api/login-as');
 const transactionLineItems = require('./api/transaction-line-items');
 const initiatePrivileged = require('./api/initiate-privileged');
 const transitionPrivileged = require('./api/transition-privileged');
 const deleteAccount = require('./api/delete-account');
+
+
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -32,6 +37,8 @@ router.use(
     type: 'application/transit+json',
   })
 );
+
+router.use(bodyParser.json({ type: ['application/json', 'application/*+json'] }));
 
 // Deserialize Transit body string to JS data
 router.use((req, res, next) => {
@@ -81,5 +88,10 @@ router.get('/auth/google', authenticateGoogle);
 // with Google. In this route a Passport.js custom callback is used for calling
 // loginWithIdp endpoint in Sharetribe Auth API to authenticate user to the marketplace
 router.get('/auth/google/callback', authenticateGoogleCallback);
+
+
+router.post('/hubtel-initiate', hubtelInitiate);
+router.post('/hubtel-callback', hubtelCallback);
+router.get('/hubtel-callback', hubtelCallback);
 
 module.exports = router;
