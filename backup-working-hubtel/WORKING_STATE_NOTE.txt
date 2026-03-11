@@ -1,0 +1,17 @@
+Working Hubtel integration snapshot
+
+Date: 2026-03-11
+Process alias:
+default-purchase/release-1 -> version 4
+
+Known working:
+- /api/hubtel-initiate returns 200
+- redirects to Hubtel payment page
+- successful Hubtel payment triggers callback
+- Sharetribe transition confirm-payment succeeds
+- transaction reaches state/purchased
+
+Known current cancel behavior:
+- cancel redirects to /hubtel-cancel?stTransactionId=...
+- no callback hit on cancel
+- transaction remains at request-payment and later expires
