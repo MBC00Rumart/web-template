@@ -89,6 +89,9 @@ const getOptimisticListing = (listing, updateValues) => {
  * @returns {JSX.Element}
  */
 const EditListingPricingPanel = props => {
+  // 🔵 UNIQUE PANEL IDENTIFIER
+  console.log('🔵 RENDERING: EditListingPricingPanel (no stock)');
+
   const [state, setState] = useState({ initialValues: getInitialValues(props) });
 
   const {
@@ -126,6 +129,12 @@ const EditListingPricingPanel = props => {
     transactionProcessAlias,
     marketplaceCurrency
   );
+
+  // ----- CURRENCY DEBUG LOGS (PricingPanel) -----
+  console.log("marketplaceCurrency:", marketplaceCurrency);
+  console.log("initial price:", initialValues.price);
+  console.log("initial price currency:", initialValues.price?.currency);
+  // ----------------------------------------------
 
   const priceCurrencyValid =
     marketplaceCurrency && initialValues.price instanceof Money

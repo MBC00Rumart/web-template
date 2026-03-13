@@ -699,7 +699,7 @@ class StripePaymentForm extends Component {
       </Form>
     ) : (
       <div className={css.missingStripeKey}>
-        <FormattedMessage id="StripePaymentForm.missingStripeKey" />
+        <FormattedMessage id="CheckoutPage.paymentViaHubtelPlaceholder" defaultMessage="Payment will be completed via Hubtel (coming next)." />
       </div>
     );
   }

@@ -51,25 +51,11 @@ const getInitialValues = props => {
 
 /**
  * The EditListingPricingAndStockPanel component.
- *
- * @component
- * @param {Object} props
- * @param {string} [props.className] - Custom class that extends the default class for the root element
- * @param {string} [props.rootClassName] - Custom class that overrides the default class for the root element
- * @param {propTypes.ownListing} props.listing - The listing object
- * @param {string} props.marketplaceCurrency - The marketplace currency (e.g. 'USD')
- * @param {number} props.listingMinimumPriceSubUnits - The listing minimum price sub units
- * @param {Array<propTypes.listingType>} props.listingTypes - The listing types
- * @param {boolean} props.disabled - Whether the form is disabled
- * @param {boolean} props.ready - Whether the form is ready
- * @param {Function} props.onSubmit - The submit function
- * @param {string} props.submitButtonText - The submit button text
- * @param {boolean} props.panelUpdated - Whether the panel is updated
- * @param {boolean} props.updateInProgress - Whether the update is in progress
- * @param {Object} props.errors - The errors object
- * @returns {JSX.Element}
  */
 const EditListingPricingAndStockPanel = props => {
+  // Optional: keep this log to verify you are in the right panel
+  console.log('🟢 RENDERING: EditListingPricingAndStockPanel (pricing + stock)');
+
   // State is needed since re-rendering would overwrite the values during XHR call.
   const [state, setState] = useState({ initialValues: getInitialValues(props) });
 
@@ -101,21 +87,26 @@ const EditListingPricingAndStockPanel = props => {
   const transactionProcessAlias = listingTypeConfig.transactionType.alias;
 
   const hasInfiniteStock = STOCK_INFINITE_ITEMS.includes(listingTypeConfig?.stockType);
-
   const isPublished = listing?.id && listing?.attributes?.state !== LISTING_STATE_DRAFT;
 
-  // Don't render the form if the assigned currency is different from the marketplace currency
-  // or if transaction process is incompatible with selected currency
+  // ----- STRIPE CURRENCY CHECK REMOVED (per Sharetribe instruction) -----
+  // The variable isStripeCompatibleCurrency is defined but no longer used.
   const isStripeCompatibleCurrency = isValidCurrencyForTransactionProcess(
     transactionProcessAlias,
     marketplaceCurrency,
     'stripe'
   );
-  const priceCurrencyValid = !isStripeCompatibleCurrency
-    ? false
-    : marketplaceCurrency && initialValues.price instanceof Money
-    ? initialValues.price?.currency === marketplaceCurrency
-    : !!marketplaceCurrency;
+
+  const priceCurrencyValid =
+    marketplaceCurrency && initialValues.price instanceof Money
+      ? initialValues.price.currency === marketplaceCurrency
+      : !!marketplaceCurrency;
+  // -----------------------------------------------------------------------
+
+  // Optional: keep these logs to verify state
+  console.log("marketplaceCurrency:", marketplaceCurrency);
+  console.log("initial price:", initialValues.price);
+  console.log("initial price currency:", initialValues.price?.currency);
 
   const panelHeadingProps = isPublished
     ? {
@@ -147,16 +138,11 @@ const EditListingPricingAndStockPanel = props => {
           onSubmit={values => {
             const { price, stock, stockTypeInfinity } = values;
 
-            // Update stock only if the value has changed, or stock is infinity in stockType,
-            // but not current stock is a small number (might happen with old listings)
-            // NOTE: this is going to be used on a separate call to API
-            // in EditListingPage.duck.js: sdk.stock.compareAndSet();
-
             const hasStockTypeInfinityChecked = stockTypeInfinity?.[0] === 'infinity';
             const hasNoCurrentStock = listing?.currentStock?.attributes?.quantity == null;
             const hasStockQuantityChanged = stock && stock !== initialValues.stock;
-            // currentStockQuantity is null or undefined, return null - otherwise use the value
             const oldTotal = hasNoCurrentStock ? null : initialValues.stock;
+
             const stockUpdateMaybe =
               hasInfiniteStock && (hasNoCurrentStock || hasStockTypeInfinityChecked)
                 ? {
@@ -174,13 +160,11 @@ const EditListingPricingAndStockPanel = props => {
                   }
                 : {};
 
-            // New values for listing attributes
             const updateValues = {
               price,
               ...stockUpdateMaybe,
             };
-            // Save the initialValues to state
-            // Otherwise, re-rendering would overwrite the values during XHR call.
+
             setState({
               initialValues: {
                 price,
@@ -188,6 +172,7 @@ const EditListingPricingAndStockPanel = props => {
                 stockTypeInfinity,
               },
             });
+
             onSubmit(updateValues);
           }}
           listingMinimumPriceSubUnits={listingMinimumPriceSubUnits}

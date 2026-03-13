@@ -377,8 +377,7 @@ const EditListingDetailsForm = props => (
         invalid ||
         disabled ||
         submitInProgress ||
-        !hasMandatoryListingTypeData ||
-        !isCompatibleCurrency;
+        !hasMandatoryListingTypeData;
 
       return (
         <Form className={classes} onSubmit={handleSubmit}>
@@ -394,7 +393,7 @@ const EditListingDetailsForm = props => (
             intl={intl}
           />
 
-          {showCategories && isCompatibleCurrency && (
+          {showCategories && (
             <FieldSelectCategory
               values={values}
               prefix={categoryPrefix}
@@ -406,7 +405,7 @@ const EditListingDetailsForm = props => (
             />
           )}
 
-          {showTitle && isCompatibleCurrency && (
+          {showTitle && (
             <FieldTextInput
               id={`${formId}title`}
               name="title"
@@ -422,7 +421,7 @@ const EditListingDetailsForm = props => (
             />
           )}
 
-          {showDescription && isCompatibleCurrency && (
+          {showDescription && (
             <FieldTextInput
               id={`${formId}description`}
               name="description"
@@ -440,7 +439,7 @@ const EditListingDetailsForm = props => (
             />
           )}
 
-          {showListingFields && isCompatibleCurrency && (
+          {showListingFields && (
             <AddListingFields
               listingType={listingType}
               listingFieldsConfig={listingFieldsConfig}
@@ -448,15 +447,6 @@ const EditListingDetailsForm = props => (
               formId={formId}
               intl={intl}
             />
-          )}
-
-          {!isCompatibleCurrency && listingType && (
-            <p className={css.error}>
-              <FormattedMessage
-                id="EditListingDetailsForm.incompatibleCurrency"
-                values={{ marketplaceName, marketplaceCurrency }}
-              />
-            </p>
           )}
 
           <Button

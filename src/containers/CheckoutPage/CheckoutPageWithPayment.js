@@ -653,7 +653,7 @@ export const CheckoutPageWithPayment = props => {
                     cursor: 'pointer',
                   }}
                 >
-                  Pay with Hubtel (TEST)
+                  Pay with Hubtel
                 </button>
               </div>
             ) : null}
