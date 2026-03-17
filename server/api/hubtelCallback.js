@@ -8,7 +8,6 @@ module.exports = async (req, res) => {
     const q = req.query || {};
     const b = req.body || {};
 
-    // Hubtel POST payload often nests data under body.Data
     const bodyStatus = b.status || b.Status || b?.Data?.Status;
     const bodyCheckoutId =
       b.checkoutId || b.checkoutid || b?.Data?.CheckoutId || b?.Data?.checkoutId;
@@ -46,7 +45,6 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ok: true, message: 'Cancelled - no transition' });
     }
 
-    // If Hubtel POST explicitly says success, allow it
     const looksSuccessful =
       normalizedStatus === 'success' ||
       b?.ResponseCode === '0000' ||
@@ -65,6 +63,23 @@ module.exports = async (req, res) => {
       });
     }
 
+    // IMPORTANT:
+    // Hubtel POST callback comes from Hubtel server, not the buyer's browser,
+    // so there is no user cookie available for getTrustedSdk(req).
+    // We acknowledge the POST successfully and let the browser success return
+    // complete the Sharetribe confirm-payment transition.
+    if (req.method === 'POST') {
+      console.log('ℹ️ HUBTEL POST CALLBACK ACCEPTED (no transition on server-to-server callback)', {
+        transactionId: rawTxId,
+        checkoutId,
+      });
+
+      return res.status(200).json({
+        ok: true,
+        message: 'POST callback accepted',
+      });
+    }
+
     let txUuid;
     try {
       txUuid = new types.UUID(rawTxId);
@@ -72,7 +87,7 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'transactionId is not a valid UUID', got: rawTxId });
     }
 
-    const sdk = await getTrustedSdk(req, res);
+    const sdk = await getTrustedSdk(req);
     const transition = 'transition/confirm-payment';
 
     try {
@@ -106,10 +121,8 @@ module.exports = async (req, res) => {
 
       return res.status(200).json({ ok: true });
     } catch (e) {
-      const errData = e?.data || e?.response?.data;
       const errStatus = e?.status || e?.response?.status;
 
-      // If already confirmed, treat duplicate callback as success
       if (errStatus === 409) {
         console.log('ℹ️ DUPLICATE CALLBACK / ALREADY CONFIRMED', {
           transactionId: rawTxId,
