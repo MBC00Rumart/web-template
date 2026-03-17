@@ -8,15 +8,19 @@ module.exports = async (req, res) => {
     const q = req.query || {};
     const b = req.body || {};
 
-    // accept both names (because you changed formats during testing)
+    // Hubtel POST payload often nests data under body.Data
+    const bodyStatus = b.status || b.Status || b?.Data?.Status;
+    const bodyCheckoutId =
+      b.checkoutId || b.checkoutid || b?.Data?.CheckoutId || b?.Data?.checkoutId;
+
     const rawTxId =
       q.stTransactionId ||
       b.stTransactionId ||
       q.transactionId ||
       b.transactionId;
 
-    const status = q.status || b.status;
-    const checkoutId = q.checkoutId || b.checkoutId || q.checkoutid || b.checkoutid;
+    const status = q.status || bodyStatus;
+    const checkoutId = q.checkoutId || q.checkoutid || bodyCheckoutId;
 
     console.log('HUBTEL CALLBACK HIT ✅', {
       method: req.method,
@@ -31,12 +35,36 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Missing transactionId in callback' });
     }
 
-    // Cancel -> no Sharetribe transition
-    if (String(status || '').toLowerCase().includes('cancel')) {
+    const normalizedStatus = String(status || '').toLowerCase();
+
+    // Cancel / cancelled / canceled -> no Sharetribe transition
+    if (
+      normalizedStatus.includes('cancel') ||
+      normalizedStatus === 'cancelled' ||
+      normalizedStatus === 'canceled'
+    ) {
       return res.status(200).json({ ok: true, message: 'Cancelled - no transition' });
     }
 
-    // Typed UUID (this is the key fix)
+    // If Hubtel POST explicitly says success, allow it
+    const looksSuccessful =
+      normalizedStatus === 'success' ||
+      b?.ResponseCode === '0000' ||
+      String(b?.Status || '').toLowerCase() === 'success' ||
+      String(b?.Data?.Status || '').toLowerCase() === 'success';
+
+    if (!looksSuccessful) {
+      return res.status(400).json({
+        error: 'Callback did not indicate success or cancellation',
+        got: {
+          status,
+          responseCode: b?.ResponseCode,
+          bodyStatus: b?.Status,
+          nestedStatus: b?.Data?.Status,
+        },
+      });
+    }
+
     let txUuid;
     try {
       txUuid = new types.UUID(rawTxId);
@@ -45,36 +73,54 @@ module.exports = async (req, res) => {
     }
 
     const sdk = await getTrustedSdk(req, res);
-
-    // Your process has :transition/confirm-payment
     const transition = 'transition/confirm-payment';
 
-    const response = await sdk.transactions.transition(
-      {
-        id: txUuid,
-        transition,
-        params: {
-          protectedData: {
-            hubtel: {
-              status: status || 'success',
-              checkoutId: checkoutId || null,
-              receivedAt: new Date().toISOString(),
+    try {
+      const response = await sdk.transactions.transition(
+        {
+          id: txUuid,
+          transition,
+          params: {
+            protectedData: {
+              hubtel: {
+                status: status || 'success',
+                checkoutId: checkoutId || null,
+                responseCode: b?.ResponseCode || null,
+                salesInvoiceId: b?.Data?.SalesInvoiceId || null,
+                clientReference: b?.Data?.ClientReference || null,
+                amount: b?.Data?.Amount || null,
+                receivedAt: new Date().toISOString(),
+                callbackMethod: req.method,
+              },
             },
           },
         },
-      },
-      { expand: true }
-    );
+        { expand: true }
+      );
 
-    console.log('✅ SHARETRIBE TRANSITION OK', {
-      id: response?.data?.data?.id?.uuid,
-      transition,
-      state: response?.data?.data?.attributes?.state,
-    });
+      console.log('✅ SHARETRIBE TRANSITION OK', {
+        id: response?.data?.data?.id?.uuid,
+        transition,
+        state: response?.data?.data?.attributes?.state,
+      });
 
-    return res.status(200).json({ ok: true });
+      return res.status(200).json({ ok: true });
+    } catch (e) {
+      const errData = e?.data || e?.response?.data;
+      const errStatus = e?.status || e?.response?.status;
+
+      // If already confirmed, treat duplicate callback as success
+      if (errStatus === 409) {
+        console.log('ℹ️ DUPLICATE CALLBACK / ALREADY CONFIRMED', {
+          transactionId: rawTxId,
+          transition,
+        });
+        return res.status(200).json({ ok: true, message: 'Already confirmed' });
+      }
+
+      throw e;
+    }
   } catch (e) {
-    // show the real Sharetribe error
     const errData = e?.data || e?.response?.data;
     console.error('❌ HUBTEL CALLBACK ERROR', {
       message: e?.message,
