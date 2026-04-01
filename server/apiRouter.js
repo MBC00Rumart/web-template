@@ -12,6 +12,7 @@ const { deserialize } = require('./api-util/sdk');
 
 const hubtelInitiate = require('./api/hubtelInitiate');
 const hubtelCallback = require('./api/hubtelCallback');
+const hubtelStatus = require('./api/hubtelStatus');
 
 const initiateLoginAs = require('./api/initiate-login-as');
 const loginAs = require('./api/login-as');
@@ -93,5 +94,7 @@ router.get('/auth/google/callback', authenticateGoogleCallback);
 router.post('/hubtel-initiate', hubtelInitiate);
 router.post('/hubtel-callback', hubtelCallback);
 router.get('/hubtel-callback', hubtelCallback);
+router.get('/hubtel-status', hubtelStatus);
+
 
 module.exports = router;

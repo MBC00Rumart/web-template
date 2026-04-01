@@ -3,6 +3,7 @@ const https = require('https');
 const Decimal = require('decimal.js');
 const log = require('../log');
 const sharetribeSdk = require('sharetribe-flex-sdk');
+const flexIntegrationSdk = require('sharetribe-flex-integration-sdk');
 
 const CLIENT_ID = process.env.REACT_APP_SHARETRIBE_SDK_CLIENT_ID;
 const CLIENT_SECRET = process.env.SHARETRIBE_SDK_CLIENT_SECRET;
@@ -13,6 +14,12 @@ const MAX_SOCKETS_DEFAULT = 10;
 
 const BASE_URL = process.env.REACT_APP_SHARETRIBE_SDK_BASE_URL;
 const ASSET_CDN_BASE_URL = process.env.REACT_APP_SHARETRIBE_SDK_ASSET_CDN_BASE_URL;
+
+// Integration SDK credentials
+const INTEGRATION_CLIENT_ID =
+  process.env.SHARETRIBE_INTEGRATION_CLIENT_ID || CLIENT_ID;
+const INTEGRATION_CLIENT_SECRET =
+  process.env.SHARETRIBE_INTEGRATION_CLIENT_SECRET || CLIENT_SECRET;
 
 // Application type handlers for JS SDK.
 //
@@ -232,4 +239,14 @@ exports.fetchAccessControlAsset = sdk => {
       }
       return response;
     });
+};
+
+// Integration SDK instance for privileged operations (e.g., listing creation)
+exports.getIntegrationSdk = () => {
+  return flexIntegrationSdk.createInstance({
+    clientId: INTEGRATION_CLIENT_ID,
+    clientSecret: INTEGRATION_CLIENT_SECRET,
+    httpAgent,
+    httpsAgent,
+  });
 };
